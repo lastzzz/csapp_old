@@ -4,7 +4,7 @@
 #include <string.h>
 #include "../header/common.h"
 #include "../header/linker.h"
-#include "../header/cpu.h"
+#include "../header/instruction.h"
 
 
 
@@ -122,7 +122,7 @@ void link_elf(elf_t **srcs, int num_srcs, elf_t *dst){
     // merge the left sections and relocate the entries in .text and .data
 
     // merge the symbol content from ELF src into dst sections
-    merge_section(srcs, num_srcs, dst, smap_table, &smap_count);\
+    merge_section(srcs, num_srcs, dst, smap_table, &smap_count);
 
     printf("----------------------\n");
     printf("after merging the sections\n");
@@ -138,6 +138,7 @@ void link_elf(elf_t **srcs, int num_srcs, elf_t *dst){
     for (int i = 0; i < dst->line_count; ++ i){
         printf("%s\n", dst->buffer[i]);
     }
+    // printf("\t\t\t\t\t\t\tfinished\n");
 
     
 }
@@ -469,10 +470,10 @@ static void merge_section(elf_t **srcs, int num_srcs, elf_t *dst,
         // 在dst的symt中写的位置
         int symt_written = 0;
         int sym_section_offset = 0;
-
+        
         // 寻找已经在compute_section_header中处理完的dst->sht的section在哪一个源文件哪一个位置。
         // 遍历搜索dst->sht_count个section
-        for (int section_index = 0; section_index < dst->sht_count; ++ section_index){
+        for (int section_index = 0; section_index < dst->sht_count; ++section_index){
             // merge by the dst.sht order in symbol unit
 
             // get the section by section id
@@ -491,8 +492,16 @@ static void merge_section(elf_t **srcs, int num_srcs, elf_t *dst,
                 int src_section_index = -1;
                 // scan every section in this elf
                 // 对比每个源文件中所有的section table中名字有没有与目标section一样的
+                                                                                                                    
                 for (int j = 0; j < srcs[i]->sht_count; ++ j){
                 // check if this ELF srcs[i] contains the same section as target_sh
+                                                                                                                // printf("\t\t\t\t\t\t\t\t%ld\n", srcs[i]->line_count);
+                                                                                                                // for (int g = 0; g < srcs[i]->line_count; g++){
+                                                                                                                //     printf("BUffer\t");
+                                                                                                                //     printf("\t\tBuffer:%s\n", srcs[i]->buffer[g]);
+                                                                                                                // }
+                                                                                                                // printf("\t\t\t%s\t%s\n", target_sh->sh_name, srcs[i]->sht[j].sh_name);
+                                                                                                                // printf("%s  ?  %s\n", target_sh->sh_name, srcs[i]->sht[j].sh_name);
                     if (strcmp(target_sh->sh_name, srcs[i]->sht[j].sh_name) == 0){
                         // we have found the same section name
                         src_section_index = j;
@@ -506,6 +515,7 @@ static void merge_section(elf_t **srcs, int num_srcs, elf_t *dst,
                 if (src_section_index == -1){
                     // search for the next ELF
                     // because the current ELF srcs[i] does not contain the target_sh
+                                                                                                                        // printf("error\n");
                     continue;
                 }
                 else{
@@ -562,13 +572,15 @@ static void merge_section(elf_t **srcs, int num_srcs, elf_t *dst,
                                     dst->symt[symt_written].st_size = sym->st_size;
 
                                     // update the smap_table
-                                    // this will hep the relocation
+                                    // this will help the relocation
                                     smap_table[k].dst = &dst->symt[symt_written];
 
                                     // udpate the counter
                                     symt_written += 1;
                                     line_written += sym->st_size;
                                     sym_section_offset += sym->st_size;
+
+                                    
                                 }
                             }
                             // symbol srcs[i].symt[j] has been checked
@@ -581,18 +593,27 @@ static void merge_section(elf_t **srcs, int num_srcs, elf_t *dst,
         }
         // all .text, .rodata, .data sections in dst has been merged
 
+        // finally, check EOF file
+    printf("----\nfinal output EOF:\n");
+    for (int i = 0; i < dst->line_count; ++ i){
+        printf("%s\n", dst->buffer[i]);
+    }
+
+
 
         // finally, merge .symtab
-        // for (int i = 0; i < dst->symt_count; ++ i){
-        //     st_entry_t *sym = &dst->symt[i];
-        //     sprintf(dst->buffer[line_written], "%s,%s,%s,%s,%ld,%ld", 
-        //         sym->st_name, get_stb_string(sym->bind), get_stt_string(sym->type),
-        //         sym->st_shndx, sym->st_value, sym->st_size);
-        //     line_written ++;
-        // }
-        // assert(line_written == dst->line_count);
+        for (int i = 0; i < dst->symt_count; ++ i){
+            st_entry_t *sym = &dst->symt[i];
+            sprintf(dst->buffer[line_written], "%s,%s,%s,%s,%ld,%ld", 
+                sym->st_name, get_stb_string(sym->bind), get_stt_string(sym->type),
+                sym->st_shndx, sym->st_value, sym->st_size);
+            line_written ++;
+        }
+        assert(line_written == dst->line_count);
         
     }
+
+
 
 
 // precondition: smap_table.dst is valid
@@ -783,9 +804,15 @@ static void write_relocation(char *dst, uint64_t val){
     }
 }
 
+
+
+
+
 static void R_X86_64_32_handler(elf_t *dst, sh_entry_t *sh,
     int row_referencing, int col_referencing, int addend,
     st_entry_t *sym_referenced){
+    
+    
     uint64_t sym_address = get_symbol_runtime_address(dst, sym_referenced);
     char *s = &dst->buffer[sh->sh_offset + row_referencing][col_referencing];
     write_relocation(s, sym_address);
@@ -795,6 +822,8 @@ static void R_X86_64_32_handler(elf_t *dst, sh_entry_t *sh,
 static void R_X86_64_PC32_handler(elf_t *dst, sh_entry_t *sh,
     int row_referencing, int col_referencing, int addend,
     st_entry_t *sym_referenced){
+    
+    
     assert(strcmp(sh->sh_name, ".text") == 0);
 
     uint64_t sym_address = get_symbol_runtime_address(dst, sym_referenced);

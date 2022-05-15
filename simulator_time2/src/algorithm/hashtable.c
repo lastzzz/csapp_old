@@ -66,10 +66,10 @@ void hashtable_free(hashtable_t *tab)
         return;
     }
 
-#ifdef DEBUG_DATASTRUCTURE
+
     printf("free hashtable:\n");
     print_hashtable(tab);
-#endif
+
 
     for (int i = 0; i < tab->num; ++ i)
     {
@@ -286,7 +286,7 @@ static void insert_bucket_tail(hashtable_t *tab, hashtable_bucket_t *b, char *ke
     b->counter ++;
 }
 
-#ifdef DEBUG_HASHTABLE
+
 
 void print_hashtable(hashtable_t *tab)
 {
@@ -304,4 +304,3 @@ void print_hashtable(hashtable_t *tab)
     }
 }
 
-#endif

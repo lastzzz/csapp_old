@@ -4,62 +4,63 @@
 #include "../../header/cpu.h"
 #include "../../header/memory.h"
 #include "../../header/common.h"
+#include "../../header/instruction.h"
 
-/*=========================================*/
-/*       instruction set architecture      */
-/*=========================================*/
+// /*=========================================*/
+// /*       instruction set architecture      */
+// /*=========================================*/
 
 
-// data structures
+// // data structures
 
-typedef enum INST_OPERATOR{
+// typedef enum INST_OPERATOR{
     
-    INST_MOV,       //0
-    INST_PUSH,      //1
-    INST_POP,       //2
-    INST_LEAVE,     //3
-    INST_CALL,      //4
-    INST_RET,       //5
-    INST_ADD,       //6
-    INST_SUB,       //7
-    INST_CMP,       //8
-    INST_JNE,       //9
-    INST_JMP,       //10
-}op_t;
+//     INST_MOV,       //0
+//     INST_PUSH,      //1
+//     INST_POP,       //2
+//     INST_LEAVE,     //3
+//     INST_CALL,      //4
+//     INST_RET,       //5
+//     INST_ADD,       //6
+//     INST_SUB,       //7
+//     INST_CMP,       //8
+//     INST_JNE,       //9
+//     INST_JMP,       //10
+// }op_t;
 
 
-typedef enum OPERAND_TYPE{
-    EMPTY,                      //0
-    IMM,                        //1
-    REG,                        //2
-    MEM_IMM,                    //3
-    MEM_REG1,                   //4
-    MEM_IMM_REG1,               //5
-    MEM_REG1_REG2,              //6
-    MEM_IMM_REG1_REG2,          //7
-    MEM_REG2_SCAL,              //8
-    MEM_IMM_REG2_SCAL,          //9
-    MEM_REG1_REG2_SCAL,         //10
-    MEM_IMM_REG1_REG2_SCAL,     //11
-}od_type_t;
+// typedef enum OPERAND_TYPE{
+//     EMPTY,                      //0
+//     IMM,                        //1
+//     REG,                        //2
+//     MEM_IMM,                    //3
+//     MEM_REG1,                   //4
+//     MEM_IMM_REG1,               //5
+//     MEM_REG1_REG2,              //6
+//     MEM_IMM_REG1_REG2,          //7
+//     MEM_REG2_SCAL,              //8
+//     MEM_IMM_REG2_SCAL,          //9
+//     MEM_REG1_REG2_SCAL,         //10
+//     MEM_IMM_REG1_REG2_SCAL,     //11
+// }od_type_t;
 
-typedef struct OPENRAND_STRUCT{
+// typedef struct OPENRAND_STRUCT{
 
-    od_type_t type;     // IMM, REG, MEM
-    uint64_t  imm;      //immediate number
-    uint64_t  scal;     //scale number to register 2
-    uint64_t  reg1;     //main register
-    uint64_t  reg2;     //register
-}od_t;
+//     od_type_t type;     // IMM, REG, MEM
+//     uint64_t  imm;      //immediate number
+//     uint64_t  scal;     //scale number to register 2
+//     uint64_t  reg1;     //main register
+//     uint64_t  reg2;     //register
+// }od_t;
 
 
 
-typedef struct INST_STRUCT{
+// typedef struct INST_STRUCT{
 
-        op_t    op;
-        od_t    src;
-        od_t    dst;
-}inst_t;
+//         op_t    op;
+//         od_t    src;
+//         od_t    dst;
+// }inst_t;
 
 
 
@@ -617,6 +618,7 @@ static void call_handler(od_t *src_od, od_t *dst_od, core_t *cr){
     // 将下一条指令写入栈中
     write64bits_dram(va2pa((cr->reg).rsp, cr), cr->rip + sizeof(char) * MAX_INSTRUCTION_CHAR, cr);
     // jump to target functio address
+    
     cr->rip = src;
     cr->flags.__flag_value = 0;
 }

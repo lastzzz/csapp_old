@@ -5,6 +5,7 @@
 #include <assert.h>
 #include "../header/linker.h"
 #include "../header/common.h"
+#include "../header/algorithm.h"
 
 static void print_sh_entry(sh_entry_t *sh){
 
@@ -283,24 +284,52 @@ static int read_elf(const char *filename, uint64_t bufaddr){
     return line_counter;
 }
 
+// static void init_dictionary(){
+//     if (link_constant_dict != NULL)
+//     {
+//         return;
+//     }
+
+//     link_constant_dict = hashtable_construct(4);
+
+//     link_constant_dict = hashtable_insert(link_constant_dict, "STB_LOCAL", STB_LOCAL);
+//     link_constant_dict = hashtable_insert(link_constant_dict, "STB_GLOBAL", STB_GLOBAL);
+//     link_constant_dict = hashtable_insert(link_constant_dict, "STB_WEAK", STB_WEAK);
+
+//     link_constant_dict = hashtable_insert(link_constant_dict, "STT_NOTYPE", STT_NOTYPE);
+//     link_constant_dict = hashtable_insert(link_constant_dict, "STT_OBJECT", STT_OBJECT);
+//     link_constant_dict = hashtable_insert(link_constant_dict, "STT_FUNC", STT_FUNC);
+
+//     link_constant_dict = hashtable_insert(link_constant_dict, "R_X86_64_32", R_X86_64_32);
+//     link_constant_dict = hashtable_insert(link_constant_dict, "R_X86_64_PC32", R_X86_64_PC32);
+//     link_constant_dict = hashtable_insert(link_constant_dict, "R_X86_64_PLT32", R_X86_64_PLT32);
+// }
+
+
 
 void parse_elf(const char *filename, elf_t *elf){
 
     assert(elf != NULL);
-    int line_counter = read_elf(filename, (uint64_t)(&(elf->buffer)));
-    for (int i = 0; i < line_counter; i++){
+    elf->line_count = read_elf(filename, (uint64_t)(&(elf->buffer)));
+    // int line_counter = read_elf(filename, (uint64_t)(&(elf->buffer)));
+    for (int i = 0; i < elf->line_count; i++){
         printf("[%d]\t%s\n", i, elf->buffer[i]);
     }
 
+    // init_dictionary();
+
     //parse section headers
-    int sh_count = string2uint(elf->buffer[1]);//第二行为节头表entry的数量
-    elf->sht = malloc(sh_count * sizeof(sh_entry_t));
+
+    // int sh_count = string2uint(elf->buffer[1]);//第二行为节头表entry的数量
+    elf->sht_count = string2uint(elf->buffer[1]);
+    elf->sht = malloc(elf->sht_count * sizeof(sh_entry_t));
+    memset(elf->sht, 0, elf->sht_count * sizeof(sh_entry_t));
 
     sh_entry_t *symt_sh = NULL;
     sh_entry_t *rtext_sh = NULL;
     sh_entry_t *rdata_sh = NULL;
 
-    for (int i = 0; i < sh_count; ++i){
+    for (int i = 0; i < elf->sht_count; ++i){
         parse_sh(elf->buffer[2 + i], &(elf->sht[i]));//第二行开始就是节头表entry的值
         print_sh_entry(&(elf->sht[i]));
 
@@ -355,7 +384,7 @@ void parse_elf(const char *filename, elf_t *elf){
         elf->reltext = NULL;
     }
 
-     if (rdata_sh != NULL){
+    if (rdata_sh != NULL){
         elf->reldata_count = rdata_sh->sh_size;
         elf->reldata = malloc(elf->reldata_count * sizeof(rl_entry_t));
         memset(elf->reldata, 0, elf->reldata_count * sizeof(rl_entry_t));
@@ -371,15 +400,61 @@ void parse_elf(const char *filename, elf_t *elf){
             print_relocation_entry(&(elf->reldata[i]));
         }
      }
-     else {
+    else {
         elf->reldata_count = 0;
         elf->reldata = NULL;
-     }
+    }
 
 }
 
 
+void write_eof(const char *filename, elf_t *eof){
+    // open elf file
+    FILE *fp;
+    fp = fopen(filename, "w");
+    if (fp == NULL){
+        
+        printf("unable to open file %s\n", filename);
+
+        exit(1);
+    }
+
+    for (int i = 0; i < eof->line_count; ++ i){
+        fprintf(fp, "%s\n", eof->buffer[i]);
+    }
+
+    fclose(fp);
+
+    // free hash table
+    // hashtable_free(link_constant_dict);
+}
+
+
+
 void free_elf(elf_t *elf){
     assert(elf != NULL);
-    free(elf->sht);
+    
+
+    if (elf->sht != NULL){
+        free(elf->sht);
+        printf("sht ok\n");
+    }
+    
+    if (elf->symt != NULL){
+        free(elf->symt);
+        printf("symt ok\n");
+    }
+
+    if (elf->reltext != NULL){
+        free(elf->reltext);
+        printf("reltext ok\n");
+    }
+    // printf("reldata num %ld\n", elf->reldata_count);
+    if (elf->reldata != NULL){
+        free(elf->reldata);
+        printf("reldata ok\n");
+    }
+    
+    // free(elf);
+    // printf("elf ok\n");
 }

@@ -3,6 +3,7 @@
 #include <header/cpu.h>
 #include <header/common.h>
 #include <header/memory.h>
+#include <header/instruction.h>
 
 #define MAX_NUM_INSTRUCTION_CYCLE 100
 

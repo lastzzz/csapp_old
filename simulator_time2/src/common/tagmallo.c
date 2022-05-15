@@ -69,3 +69,51 @@ int tag_free(void *ptr){
     free(ptr);
     return 1;
 }
+
+
+void tag_sweep(char *tagstr){
+    // sweep all the memory with target tag
+    // note that this is very dangerous since it will free all tag memory
+    // call this function only if you are very confident
+
+    uint64_t tag = compute_tag(tagstr);
+
+    for (int i = 0; i < tag_list->count; ++i){
+
+        linkedlist_node_t *p = linkedlist_next(tag_list);
+
+        tag_block_t *b = (tag_block_t *)p->value;
+        if (b->tag == tag){
+            // free heap memory
+            free(b->ptr);
+            // free block
+            free(b);
+            //free from the linked list
+            linkedlist_delete(tag_list, p);
+        }
+    }
+}
+
+
+static void tag_destroy(){
+
+    for (int i = 0; i < tag_list->count; ++ i){
+        linkedlist_node_t *p = linkedlist_next(tag_list);
+        tag_block_t *b = (tag_block_t *)p->value;
+
+        //free heap memory
+        free(b->ptr);
+        // free block
+        free(b);
+        //free from the linked list
+        linkedlist_delete(tag_list, p);
+    }
+}
+
+// just copy it from hashtable.c
+// static uint64_t compute_tag(char *str){
+
+//     int p = 31;
+//     int m = 1000000007;
+    
+// }
