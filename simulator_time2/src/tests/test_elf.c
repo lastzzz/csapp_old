@@ -19,8 +19,8 @@ int main(){
 
     // test link_elf
     elf_t src[2];
-    parse_elf("./files/exe/main.elf.txt", &src[0]);
-    parse_elf("./files/exe/sum.elf.txt", &src[1]);
+    parse_elf("./files/exe/sum.elf.txt", &src[0]);
+    parse_elf("./files/exe/main.elf.txt", &src[1]);
     
 
     elf_t dst;

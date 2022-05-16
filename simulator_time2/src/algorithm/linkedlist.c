@@ -241,6 +241,7 @@ static int set_node_prev(uint64_t node_id, uint64_t prev_id)
     {
         return 0;
     }
+    
     *(uint64_t *)&(((linkedlist_node_t *)node_id)->prev) = prev_id;
     return 1;
 }

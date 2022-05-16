@@ -113,7 +113,7 @@ int array_get(array_t *arr, int index, uint64_t *valptr)
     }
 }
 
-#ifdef DEBUG_ARRAY
+
 
 void print_array(array_t *arr)
 {
@@ -124,4 +124,3 @@ void print_array(array_t *arr)
     }
 }
 
-#endif

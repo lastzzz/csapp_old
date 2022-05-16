@@ -15,11 +15,11 @@ void add_cleanup_events(void *func){
         
         // uninitialized - lazy malloc
         // start from 8 slots
-        events = array_constuct(8);
+        events = array_construct(8);
     }
 
     // fill in the first event
-    array_insert(&events, (uint64_t)func);
+    array_insert(events, (uint64_t)func);
     return;
 }
 
@@ -27,7 +27,7 @@ void add_cleanup_events(void *func){
 void finally_cleanup(){
     for (int i=0; i < events->count; ++i){
         uint64_t address;
-        assert(array_get(events, i, &address) != NULL);
+        assert(array_get(events, i, &address) != 0);
 
         cleanup_t *func;
         *(uint64_t *)&func = address;

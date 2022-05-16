@@ -35,7 +35,7 @@ void *tag_malloc(uint64_t size, char *tagstr){
     }
 
     // add the heap address to the managin list
-    linkedlist_add(&tag_list, (uint64_t)b);
+    linkedlist_add(tag_list, (uint64_t)b);
 
     return b->ptr;
 }
@@ -111,9 +111,17 @@ static void tag_destroy(){
 }
 
 // just copy it from hashtable.c
-// static uint64_t compute_tag(char *str){
+static uint64_t compute_tag(char *str){
 
-//     int p = 31;
-//     int m = 1000000007;
-    
-// }
+    int p = 31;
+    int m = 1000000007;
+
+    int k = 0;
+    int v = 0;
+    for (int i = 0; i < strlen(str); ++i){
+        
+        v = (v + ((int)str[i] * k) % m) % m;
+        k = (k * p) % m;
+    }
+    return v;
+}

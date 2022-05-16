@@ -284,26 +284,26 @@ static int read_elf(const char *filename, uint64_t bufaddr){
     return line_counter;
 }
 
-// static void init_dictionary(){
-//     if (link_constant_dict != NULL)
-//     {
-//         return;
-//     }
+static void init_dictionary(){
+    if (link_constant_dict != NULL)
+    {
+        return;
+    }
 
-//     link_constant_dict = hashtable_construct(4);
+    link_constant_dict = hashtable_construct(4);
 
-//     link_constant_dict = hashtable_insert(link_constant_dict, "STB_LOCAL", STB_LOCAL);
-//     link_constant_dict = hashtable_insert(link_constant_dict, "STB_GLOBAL", STB_GLOBAL);
-//     link_constant_dict = hashtable_insert(link_constant_dict, "STB_WEAK", STB_WEAK);
+    link_constant_dict = hashtable_insert(link_constant_dict, "STB_LOCAL", STB_LOCAL);
+    link_constant_dict = hashtable_insert(link_constant_dict, "STB_GLOBAL", STB_GLOBAL);
+    link_constant_dict = hashtable_insert(link_constant_dict, "STB_WEAK", STB_WEAK);
 
-//     link_constant_dict = hashtable_insert(link_constant_dict, "STT_NOTYPE", STT_NOTYPE);
-//     link_constant_dict = hashtable_insert(link_constant_dict, "STT_OBJECT", STT_OBJECT);
-//     link_constant_dict = hashtable_insert(link_constant_dict, "STT_FUNC", STT_FUNC);
+    link_constant_dict = hashtable_insert(link_constant_dict, "STT_NOTYPE", STT_NOTYPE);
+    link_constant_dict = hashtable_insert(link_constant_dict, "STT_OBJECT", STT_OBJECT);
+    link_constant_dict = hashtable_insert(link_constant_dict, "STT_FUNC", STT_FUNC);
 
-//     link_constant_dict = hashtable_insert(link_constant_dict, "R_X86_64_32", R_X86_64_32);
-//     link_constant_dict = hashtable_insert(link_constant_dict, "R_X86_64_PC32", R_X86_64_PC32);
-//     link_constant_dict = hashtable_insert(link_constant_dict, "R_X86_64_PLT32", R_X86_64_PLT32);
-// }
+    link_constant_dict = hashtable_insert(link_constant_dict, "R_X86_64_32", R_X86_64_32);
+    link_constant_dict = hashtable_insert(link_constant_dict, "R_X86_64_PC32", R_X86_64_PC32);
+    link_constant_dict = hashtable_insert(link_constant_dict, "R_X86_64_PLT32", R_X86_64_PLT32);
+}
 
 
 
@@ -316,7 +316,7 @@ void parse_elf(const char *filename, elf_t *elf){
         printf("[%d]\t%s\n", i, elf->buffer[i]);
     }
 
-    // init_dictionary();
+    init_dictionary();
 
     //parse section headers
 
@@ -426,7 +426,7 @@ void write_eof(const char *filename, elf_t *eof){
     fclose(fp);
 
     // free hash table
-    // hashtable_free(link_constant_dict);
+    hashtable_free(link_constant_dict);
 }
 
 

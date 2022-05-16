@@ -5,6 +5,24 @@
 #include <stdint.h>
 #include "../header/algorithm.h"
 
+
+
+void print_hashtable(hashtable_t *tab)
+{
+    printf("----------\n");
+    printf("global %d\n", tab->globaldepth);
+    for (int i = 0; i < tab->num; ++ i)
+    {
+        hashtable_bucket_t *b = tab->directory[i];
+        printf("[%d] local %d = %p: ", i, b->localdepth, b);
+        for (int j = 0; j < b->counter; ++ j)
+        {
+            printf("%s, ", b->karray[j]);
+        }
+        printf("\n");
+    }
+}
+
 static uint64_t hash_function(char *str)
 {
     int p = 31;
@@ -288,19 +306,5 @@ static void insert_bucket_tail(hashtable_t *tab, hashtable_bucket_t *b, char *ke
 
 
 
-void print_hashtable(hashtable_t *tab)
-{
-    printf("----------\n");
-    printf("global %d\n", tab->globaldepth);
-    for (int i = 0; i < tab->num; ++ i)
-    {
-        hashtable_bucket_t *b = tab->directory[i];
-        printf("[%d] local %d = %p: ", i, b->localdepth, b);
-        for (int j = 0; j < b->counter; ++ j)
-        {
-            printf("%s, ", b->karray[j]);
-        }
-        printf("\n");
-    }
-}
+
 

@@ -3,6 +3,12 @@
 
 #include <stdint.h>
 
+void add_cleanup_events(void *func);
+void finally_cleanup();
+
+
+
+
 #define NULL_ID (0)
 
 /*======================================*/
