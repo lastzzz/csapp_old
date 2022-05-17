@@ -10,6 +10,10 @@
 
 #define NUM_CACHE_LINE_PER_SET (8)
 
+static void read_sram_cacheline(address_t paddr, uint8_t *block);
+static void write_sram_cacheline(address_t paddr, uint8_t *block);
+
+
 // write-back and write-allocate
 typedef enum
 {
@@ -41,3 +45,46 @@ typedef struct
 } sram_cache_t;
 
 static sram_cache_t cache;
+
+
+
+
+/* interface of I/O Bus: read and write between the SRAM cache and DRAM memory
+ */
+
+static void read_sram_cacheline(address_t paddr, uint8_t *block){
+
+    uint64_t size64 = sizeof(uint64_t);
+
+    uint64_t dram_base = ((paddr.paddr_value >> SRAM_CACHE_OFFSET_LENGTH) << SRAM_CACHE_TAG_LENGTH);
+    uint64_t block_base = (uint64_t)block;
+
+    for (int i = 0; i < ((1 << SRAM_CACHE_OFFSET_LENGTH) / size64); ++i){
+
+        uint64_t dram_addr = dram_base + i * size64;
+        uint64_t block_addr = block_base + i * size64;
+
+        *(uint64_t *)(block_addr) = read64bits_dram(dram_addr);
+    }
+
+}
+
+
+static void write_sram_cacheline(address_t paddr, uint8_t *block){
+    
+    uint64_t size64 = sizeof(uint64_t);
+
+    uint64_t dram_base = ((paddr.paddr_value >> SRAM_CACHE_OFFSET_LENGTH) << SRAM_CACHE_TAG_LENGTH);
+    uint64_t block_base = (uint64_t)block;
+
+    for (int i = 0; i < ((1 << SRAM_CACHE_OFFSET_LENGTH) / size64); ++i){
+
+        uint64_t dram_addr = dram_base + i * size64;
+        uint64_t block_addr = block_base + i * size64;
+
+        uint64_t value = *(uint64_t *)(block_addr);
+        write64bits_dram(dram_addr, value);
+    }
+
+}
+
