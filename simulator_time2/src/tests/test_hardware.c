@@ -43,9 +43,9 @@ static void TestSumRecursiveCondition(){
     
     cr->flags.__flag_value = 0;
     
-    write64bits_dram(va2pa(0x7ffffffee230, cr), 0x0000000008000650, cr);//rbp
-    write64bits_dram(va2pa(0x7ffffffee228, cr), 0x0000000000000000, cr);
-    write64bits_dram(va2pa(0x7ffffffee220, cr), 0x00007ffffffee310, cr);//rsp
+    cpu_write64bits_dram(va2pa(0x7ffffffee230, cr), 0x0000000008000650, cr);//rbp
+    cpu_write64bits_dram(va2pa(0x7ffffffee228, cr), 0x0000000000000000, cr);
+    cpu_write64bits_dram(va2pa(0x7ffffffee220, cr), 0x00007ffffffee310, cr);//rsp
 
     char assembly[19][MAX_INSTRUCTION_CHAR] = {
         "push   %rbp",              // 0
@@ -72,7 +72,7 @@ static void TestSumRecursiveCondition(){
 
     for (int i = 0; i < 19; ++ i)
     {
-        writeinst_dram(va2pa(i * 0x40 + 0x00400000, cr), assembly[i], cr);
+        cpu_writeinst_dram(va2pa(i * 0x40 + 0x00400000, cr), assembly[i], cr);
         // 每次偏移64个字节的长度
     }
     // MAX_INSTRUCTION_CHAR * sizeof(char) = 64，就是0x40
@@ -109,9 +109,9 @@ static void TestSumRecursiveCondition(){
 
     match = 1;
 
-    match = match && (read64bits_dram(va2pa(0x7ffffffee230, cr), cr) == 0x0000000008000650);//rbp
-    match = match && (read64bits_dram(va2pa(0x7ffffffee228, cr), cr) == 0x0000000000000006);
-    match = match && (read64bits_dram(va2pa(0x7ffffffee220, cr), cr) == 0x00007ffffffee310);//rsp
+    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee230, cr), cr) == 0x0000000008000650);//rbp
+    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee228, cr), cr) == 0x0000000000000006);
+    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee220, cr), cr) == 0x00007ffffffee310);//rsp
 
     if (match == 1){
         printf("memory match\n");
@@ -161,11 +161,11 @@ static void TestAddFunctionCallAndComputation(){
     ac->reg.rbp = 0x7ffffffee110;
     ac->reg.rsp = 0x7ffffffee0f0;
 
-    write64bits_dram(va2pa(0x7ffffffee110, ac), 0x0000000000000000, ac);//rbp
-    write64bits_dram(va2pa(0x7ffffffee108, ac), 0x0000000000000000, ac);
-    write64bits_dram(va2pa(0x7ffffffee100, ac), 0x0000000012340000, ac);
-    write64bits_dram(va2pa(0x7ffffffee0f8, ac), 0x000000000000abcd, ac);
-    write64bits_dram(va2pa(0x7ffffffee0f0, ac), 0x0000000000000000, ac);//rsp
+    cpu_write64bits_dram(va2pa(0x7ffffffee110, ac), 0x0000000000000000, ac);//rbp
+    cpu_write64bits_dram(va2pa(0x7ffffffee108, ac), 0x0000000000000000, ac);
+    cpu_write64bits_dram(va2pa(0x7ffffffee100, ac), 0x0000000012340000, ac);
+    cpu_write64bits_dram(va2pa(0x7ffffffee0f8, ac), 0x000000000000abcd, ac);
+    cpu_write64bits_dram(va2pa(0x7ffffffee0f0, ac), 0x0000000000000000, ac);//rsp
 
 
     // 2 before call
@@ -195,7 +195,7 @@ static void TestAddFunctionCallAndComputation(){
 
     for (int i = 0; i < 15; ++ i)
     {
-        writeinst_dram(va2pa(i * 0x40 + 0x00400000, ac), assembly[i], ac);
+        cpu_writeinst_dram(va2pa(i * 0x40 + 0x00400000, ac), assembly[i], ac);
         // 每次偏移64个字节的长度
     }
     // MAX_INSTRUCTION_CHAR * sizeof(char) = 64，就是0x40
@@ -236,11 +236,11 @@ static void TestAddFunctionCallAndComputation(){
 
     match = 1;
 
-    match = match && (read64bits_dram(va2pa(0x7ffffffee110, ac), ac) == 0x0000000000000000);
-    match = match && (read64bits_dram(va2pa(0x7ffffffee108, ac), ac) == 0x000000001234abcd);
-    match = match && (read64bits_dram(va2pa(0x7ffffffee100, ac), ac) == 0x0000000012340000);
-    match = match && (read64bits_dram(va2pa(0x7ffffffee0f8, ac), ac) == 0x000000000000abcd);
-    match = match && (read64bits_dram(va2pa(0x7ffffffee0f0, ac), ac) == 0x0000000000000000);
+    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee110, ac), ac) == 0x0000000000000000);
+    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee108, ac), ac) == 0x000000001234abcd);
+    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee100, ac), ac) == 0x0000000012340000);
+    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee0f8, ac), ac) == 0x000000000000abcd);
+    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee0f0, ac), ac) == 0x0000000000000000);
 
     if (match == 1){
         printf("memory match\n");

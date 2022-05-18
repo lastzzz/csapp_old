@@ -35,10 +35,10 @@ uint8_t pm[PHYSICAL_MEMORY_SPACE];
 /*======================================*/
 
 // used by instructions: read or write uint64_t to DRAM
-uint64_t read64bits_dram(uint64_t paddr, core_t *cr);
-void write64bits_dram(uint64_t paddr, uint64_t data, core_t *cr);
-void readinst_dram(uint64_t paddr, char *buf, core_t *cr);
-void writeinst_dram(uint64_t paddr, const char *str, core_t *cr);
+uint64_t cpu_read64bits_dram(uint64_t paddr, core_t *cr);
+void cpu_write64bits_dram(uint64_t paddr, uint64_t data, core_t *cr);
+void cpu_readinst_dram(uint64_t paddr, char *buf, core_t *cr);
+void cpu_writeinst_dram(uint64_t paddr, const char *str, core_t *cr);
 
 
 void bus_read(uint64_t paddr, uint8_t *block);
