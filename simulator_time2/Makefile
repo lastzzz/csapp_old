@@ -30,7 +30,7 @@ TEST_LINK = $(SRC_DIR)/tests/test_elf.c
 .PHONY: hardware
 
 hardware:
-	$(CC) $(CFLAGS) -I$(SRC_DIR) $(COMMON) $(CPU) $(MEMORY) $(DISK) $(TEST_HARDWARE) -o $(BIN_HARDWARE)
+	$(CC) $(CFLAGS) -I$(SRC_DIR) $(COMMON) $(CPU) $(MEMORY) $(DISK) $(ALGORITHM) $(TEST_HARDWARE) -o $(BIN_HARDWARE)
 	./$(BIN_HARDWARE)
 
 

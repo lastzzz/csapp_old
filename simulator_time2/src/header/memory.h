@@ -41,5 +41,9 @@ void readinst_dram(uint64_t paddr, char *buf, core_t *cr);
 void writeinst_dram(uint64_t paddr, const char *str, core_t *cr);
 
 
+void bus_read(uint64_t paddr, uint8_t *block);
+void bus_write(uint64_t paddr, uint8_t *block);
+
+
 
 #endif

@@ -4,6 +4,10 @@
 #include "../../header/cpu.h"
 #include "../../header/memory.h"
 #include "../../header/common.h"
+#include "../../header/address.h"
+
+uint8_t sram_cache_read(uint64_t paddr);
+void sram_cache_write(uint64_t paddr, uint8_t data);
 
 #define SRAM_CACHE_SETTING 0  //  开关cashe功能，cache功能以后写
 
@@ -15,12 +19,16 @@
 */
 
 // memory accessing used in instruction
-uint64_t read64bits_dram(uint64_t paddr, core_t *cr){
+uint64_t cpu_read64bits_dram(uint64_t paddr, core_t *cr){
 
     if (SRAM_CACHE_SETTING == 1){
         //try to load uint64_t from SRAM cache
         // little-endian
-        return 0x0;
+        uint64_t val = 0x0;
+        for (int i = 0; i < 8; ++i){
+            val += sram_cache_read(paddr + i) << (i * 8);
+        }
+        return val;
     }
     else {
         
@@ -45,12 +53,15 @@ uint64_t read64bits_dram(uint64_t paddr, core_t *cr){
 
 
 
-void write64bits_dram(uint64_t paddr, uint64_t data, core_t *cr){
+void cpu_write64bits_dram(uint64_t paddr, uint64_t data, core_t *cr){
 
     if (SRAM_CACHE_SETTING == 1){
         
         // try to write uint64_t to SRAM cache
         // little-endian
+        for (int i = 0; i < 8; ++i){
+            sram_cache_write(paddr + i, (data >> (i * 8)) & 0xff);
+        }
         return;
 
     }
@@ -72,7 +83,7 @@ void write64bits_dram(uint64_t paddr, uint64_t data, core_t *cr){
     
 }
 
-void readinst_dram(uint64_t paddr, char *buf, core_t *core){
+void cpu_readinst_dram(uint64_t paddr, char *buf, core_t *core){
 
     for (int i = 0; i < MAX_INSTRUCTION_CHAR; ++i){
         buf[i] = (char)pm[paddr + i];
@@ -80,7 +91,7 @@ void readinst_dram(uint64_t paddr, char *buf, core_t *core){
 
 }
 
-void writeinst_dram(uint64_t paddr, const char *str, core_t *core){
+void cpu_writeinst_dram(uint64_t paddr, const char *str, core_t *core){
 
     int len = strlen(str);
     assert(len < MAX_INSTRUCTION_CHAR);
@@ -93,6 +104,34 @@ void writeinst_dram(uint64_t paddr, const char *str, core_t *core){
         else {
             pm[paddr + i] = 0;
         }
+    }
+
+}
+
+
+/* interface of I/O Bus: read and write between the SRAM cache and DRAM memory
+ */
+
+void bus_read(uint64_t paddr, uint8_t *block){
+
+
+    uint64_t dram_base = ((paddr >> SRAM_CACHE_OFFSET_LENGTH) << SRAM_CACHE_TAG_LENGTH);
+
+    for (int i = 0; i < (1 << SRAM_CACHE_OFFSET_LENGTH); ++i){
+
+        block[i] = pm[dram_base + i];
+    }
+
+} 
+
+
+void bus_write(uint64_t paddr, uint8_t *block){
+
+    uint64_t dram_base = ((paddr >> SRAM_CACHE_OFFSET_LENGTH) << SRAM_CACHE_TAG_LENGTH);
+
+    for (int i = 0; i < (1 << SRAM_CACHE_OFFSET_LENGTH); ++i){
+
+        pm[dram_base + i] = block[i];
     }
 
 }

@@ -10,8 +10,6 @@
 
 #define NUM_CACHE_LINE_PER_SET (8)
 
-static void read_sram_cacheline(address_t paddr, uint8_t *block);
-static void write_sram_cacheline(address_t paddr, uint8_t *block);
 
 
 // write-back and write-allocate
@@ -49,42 +47,196 @@ static sram_cache_t cache;
 
 
 
-/* interface of I/O Bus: read and write between the SRAM cache and DRAM memory
- */
+uint8_t sram_cache_read(uint64_t paddr_value){
 
-static void read_sram_cacheline(address_t paddr, uint8_t *block){
+    address_t paddr = {
+        .paddr_value = paddr_value,
+    };
 
-    uint64_t size64 = sizeof(uint64_t);
 
-    uint64_t dram_base = ((paddr.paddr_value >> SRAM_CACHE_OFFSET_LENGTH) << SRAM_CACHE_TAG_LENGTH);
-    uint64_t block_base = (uint64_t)block;
+    sram_cacheset_t set = cache.sets[paddr.ci];
 
-    for (int i = 0; i < ((1 << SRAM_CACHE_OFFSET_LENGTH) / size64); ++i){
+    sram_cacheline_t *victim = NULL;
+    sram_cacheline_t *invalid = NULL;
+    int max_time = -1;
 
-        uint64_t dram_addr = dram_base + i * size64;
-        uint64_t block_addr = block_base + i * size64;
-
-        *(uint64_t *)(block_addr) = read64bits_dram(dram_addr);
+    // update LRU time
+    for (int i = 0; i < NUM_CACHE_LINE_PER_SET; ++i){
+        set.lines[i].time++;
+        if (max_time < set.lines[i].time){
+            // select this line as victim by LRU policy
+            // replace it when all lines are valid
+            victim = &(set.lines[i]);
+            max_time = set.lines[i].time;
+        }
+        if (set.lines[i].state == CACHE_LINE_INVALID){
+            //exist one invalid line as candidate for cache miss
+            invalid = &(set.lines[i]);
+        }
     }
+
+    // try cache hit
+    for (int i = 0; i < NUM_CACHE_LINE_PER_SET; ++i){
+        sram_cacheline_t line = set.lines[i];
+
+        if (line.state != CACHE_LINE_INVALID && line.tag == paddr.ct){
+
+            // cache hit
+            // update LRU time
+            line.time = 0;
+            // find the byte
+            return line.block[paddr.co];
+        }
+    }
+
+    // cache miss: load from memory
+
+
+    //try to find one free cache line
+    if (invalid != NULL){
+        // load data from DRAM to this invalid cache line
+        bus_read(paddr.paddr_value, &(invalid->block));
+
+        //update cache line state
+        invalid->state = CACHE_LINE_CLEAN;
+
+        // update LRU
+        invalid->time = 0;
+
+        // update tag
+        invalid->tag = paddr.ct;
+        return invalid->block[paddr.co];
+    }
+    assert(victim != NULL);
+    // no free cache line, use LRU policy
+    if (victim->state == CACHE_LINE_DIRTY){
+        // write back the dirty line to dram
+        bus_write(paddr.paddr_value, victim);
+
+        // update state
+        victim->state = CACHE_LINE_INVALID;
+    }
+
+    // if CACHE_LINE_CLEAN discard this victim directly
+    victim->state = CACHE_LINE_INVALID;
+
+    // read from dram
+    // load data from DRAM to this invalid cache line
+    bus_read(paddr.paddr_value, &(victim->block));
+
+    //update cache line state
+    victim->state = CACHE_LINE_CLEAN;
+
+    // update LRU
+    victim->time = 0;
+
+    // update tag
+    victim->tag = paddr.ct;
+    return victim->block[paddr.co];
 
 }
 
 
-static void write_sram_cacheline(address_t paddr, uint8_t *block){
-    
-    uint64_t size64 = sizeof(uint64_t);
+void sram_cache_write(uint64_t paddr_value, uint8_t data){
 
-    uint64_t dram_base = ((paddr.paddr_value >> SRAM_CACHE_OFFSET_LENGTH) << SRAM_CACHE_TAG_LENGTH);
-    uint64_t block_base = (uint64_t)block;
+    address_t paddr = {
+        .paddr_value = paddr_value,
+    };
 
-    for (int i = 0; i < ((1 << SRAM_CACHE_OFFSET_LENGTH) / size64); ++i){
+    sram_cacheset_t set = cache.sets[paddr.ci];
+    sram_cacheline_t *victim = NULL;
+    sram_cacheline_t *invalid = NULL; // for write-allocate
+    int max_time = -1;
 
-        uint64_t dram_addr = dram_base + i * size64;
-        uint64_t block_addr = block_base + i * size64;
-
-        uint64_t value = *(uint64_t *)(block_addr);
-        write64bits_dram(dram_addr, value);
+    // update LRU time
+    for (int i = 0; i < NUM_CACHE_LINE_PER_SET; ++i){
+        set.lines[i].time++;
+        if (max_time < set.lines[i].time){
+            // select this line as victim by LRU policy
+            // replace it when all lines are valid
+            victim = &(set.lines[i]);
+            max_time = set.lines[i].time;
+        }
+        if (set.lines[i].state == CACHE_LINE_INVALID){
+            //exist one invalid line as candidate for cache miss
+            invalid = &(set.lines[i]);
+        }
     }
 
+    // try cache hit
+    for (int i = 0; i < NUM_CACHE_LINE_PER_SET; ++i){
+        sram_cacheline_t line = set.lines[i];
+
+        if (line.state != CACHE_LINE_INVALID && line.tag == paddr.ct){
+
+            // cache hit
+
+            // update LRU time
+            line.time = 0;
+
+            // find the byte
+            line.block[paddr.co] = data;
+
+            // update state
+            line.state = CACHE_LINE_DIRTY;
+            return;
+        }
+    }
+
+    // cache miss: load from memory
+
+    //write-allocate
+
+    //try to find one free cache line
+    if (invalid != NULL){
+        // load data from DRAM to this invalid cache line
+        bus_read(paddr.paddr_value, &(invalid->block));
+
+        //update cache line state
+        invalid->state = CACHE_LINE_DIRTY;
+
+        // update LRU
+        invalid->time = 0;
+
+        // update tag
+        invalid->tag = paddr.ct;
+        
+        // write data
+        invalid->block[paddr.co] = data;
+        return;
+    }
+    assert(victim != NULL);
+    // no free cache line, use LRU policy
+    if (victim->state == CACHE_LINE_DIRTY){
+        // write back the dirty line to dram
+        bus_write(paddr.paddr_value, victim);
+
+        // update state
+        victim->state = CACHE_LINE_INVALID;
+    }
+
+    // if CACHE_LINE_CLEAN discard this victim directly
+    victim->state = CACHE_LINE_INVALID;
+
+    // read from dram
+    // write-allocate
+    // load data from DRAM to this invalid cache line
+    bus_read(paddr.paddr_value, &(victim->block));
+
+    //update cache line state
+    victim->state = CACHE_LINE_DIRTY;
+
+    // update LRU
+    victim->time = 0;
+
+    // update tag
+    victim->tag = paddr.ct;
+    victim->block[paddr.co] = data;
+    return;
+
+
 }
+
+
+
 
