@@ -7,6 +7,7 @@ BIN_HARDWARE = ./bin/test_hardware
 BIN_LINK = ./bin/test_elf
 LINKSO = ./bin/staticlinker.so
 EXE_LINKSO = ./bin/link
+BIN_MESI = ./bin/mesi
 
 SRC_DIR = ./src
 
@@ -50,6 +51,14 @@ linkso:
 
 linkso_link:
 	$(CC) $(CFLAGS) -I$(SRC_DIR)  $(SRC_DIR)/common/convert.c $(ALGORITHM) $(SRC_DIR)/linker/linker.c -ldl -o $(EXE_LINKSO)
+
+
+.PHONY: mesi
+
+mesi:
+	$(CC)  -Wall -g -O0 -Werror -std=gnu99 -Wno-unused-but-set-variable -I$(SRC_DIR) $(SRC_DIR)/hardware/cpu/mesi.c -o $(BIN_MESI)
+	./$(BIN_MESI)
+
 
 clean:
 	rm -f *.o *~ $(EXE_HARDWARE) $(EXE_LINK) $(LINKSO)
