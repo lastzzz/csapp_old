@@ -112,7 +112,7 @@ void cpu_writeinst_dram(uint64_t paddr, const char *str, core_t *core){
 /* interface of I/O Bus: read and write between the SRAM cache and DRAM memory
  */
 
-void bus_read(uint64_t paddr, uint8_t *block){
+void bus_read_cacheline(uint64_t paddr, uint8_t *block){
 
 
     uint64_t dram_base = ((paddr >> SRAM_CACHE_OFFSET_LENGTH) << SRAM_CACHE_TAG_LENGTH);
@@ -125,7 +125,7 @@ void bus_read(uint64_t paddr, uint8_t *block){
 } 
 
 
-void bus_write(uint64_t paddr, uint8_t *block){
+void bus_write_cacheline(uint64_t paddr, uint8_t *block){
 
     uint64_t dram_base = ((paddr >> SRAM_CACHE_OFFSET_LENGTH) << SRAM_CACHE_TAG_LENGTH);
 
