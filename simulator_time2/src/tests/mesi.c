@@ -322,6 +322,9 @@ int evict_cacheline(int i){
                 last_s = j;
                 s_count ++;
             }
+            if (s_count >= 2){
+                break;
+            }
         }
 
         if (s_count == 1){

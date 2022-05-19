@@ -8,6 +8,7 @@ BIN_LINK = ./bin/test_elf
 LINKSO = ./bin/staticlinker.so
 EXE_LINKSO = ./bin/link
 BIN_MESI = ./bin/mesi
+BIN_FALSE_SHARING = ./bin/false_sharing
 
 SRC_DIR = ./src
 
@@ -24,9 +25,11 @@ ALGORITHM = $(SRC_DIR)/algorithm/array.c $(SRC_DIR)/algorithm/hashtable.c $(SRC_
 # main
 TEST_HARDWARE = $(SRC_DIR)/tests/test_hardware.c
 TEST_LINK = $(SRC_DIR)/tests/test_elf.c
+TEST_MESI = $(SRC_DIR)/tests/mesi.c
+TEST_FALSE_SHARING = $(SRC_DIR)/tests/false_sharing.c
 
 
-
+# ---------------------hardware----------------------------------------------------------------------
 
 .PHONY: hardware
 
@@ -34,6 +37,7 @@ hardware:
 	$(CC) $(CFLAGS) -I$(SRC_DIR) $(COMMON) $(CPU) $(MEMORY) $(DISK) $(ALGORITHM) $(TEST_HARDWARE) -o $(BIN_HARDWARE)
 	./$(BIN_HARDWARE)
 
+# ---------------------link---------------------------------------------------------------------------
 
 .PHONY: link
 
@@ -41,11 +45,15 @@ link:
 	$(CC) $(CFLAGS) -I$(SRC_DIR) $(COMMON) $(CPU) $(MEMORY) $(ALGORITHM) $(LINK) $(TEST_LINK) -o $(BIN_LINK)
 	./$(BIN_LINK)
 
+# ---------------------linkso---------------------------------------------------------------------------
 
 .PHONY: linkso
 
 linkso:
 	$(CC) $(CFLAGS) -I$(SRC_DIR) -shared -fPIC $(COMMON) $(ALGORITHM)  $(LINK) -o $(LINKSO)
+
+
+# ---------------------linkso_link---------------------------------------------------------------------------
 
 .PHONY: linkso_link
 
@@ -53,12 +61,19 @@ linkso_link:
 	$(CC) $(CFLAGS) -I$(SRC_DIR)  $(SRC_DIR)/common/convert.c $(ALGORITHM) $(SRC_DIR)/linker/linker.c -ldl -o $(EXE_LINKSO)
 
 
+# ---------------------mesi---------------------------------------------------------------------------
 .PHONY: mesi
 
 mesi:
-	$(CC)  -Wall -g -O0 -Werror -std=gnu99 -Wno-unused-but-set-variable -I$(SRC_DIR) $(SRC_DIR)/hardware/cpu/mesi.c -o $(BIN_MESI)
+	$(CC)  -Wall -g -O0 -Werror -std=gnu99 -Wno-unused-but-set-variable -I$(SRC_DIR) $(TEST_MESI) -o $(BIN_MESI)
 	./$(BIN_MESI)
+# ---------------------false_sharing---------------------------------------------------------------------------
 
+.PHONY: false_sharing
+
+false_sharing:
+	$(CC) -Wall -g -O0 -Werror -std=gnu99 -Wno-unused-but-set-variable -Wno-unused-variable -I$(SRC_DIR) -pthread $(TEST_FALSE_SHARING) -o $(BIN_FALSE_SHARING)
+	./$(BIN_FALSE_SHARING)
 
 clean:
-	rm -f *.o *~ $(EXE_HARDWARE) $(EXE_LINK) $(LINKSO)
+	rm -f *.o *~ $(EXE_HARDWARE) $(EXE_LINK) $(LINKSO) $(BIN_MESI)
