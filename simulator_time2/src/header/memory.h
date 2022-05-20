@@ -94,6 +94,20 @@ typedef union{
 } pte4_t;   // PT
 
 
+// physical page descriptor
+typedef struct{
+    
+    int allocated;
+    int dirty;
+    int time; // LRU cache
+    pte4_t *pte4; // the reversed mapping: from PPN to page table entry
+}pd_t;
+
+// for each pagable (swappable) physical page
+// create one reversed mapping
+pd_t page_map[MAX_NUM_PHYSICAL_PAGE];
+
+
 /*======================================*/
 /*      memory R/W                      */
 /*======================================*/
