@@ -8,12 +8,76 @@
 
 uint64_t va2pa(uint64_t vaddr){
 
-
+#ifdef USE_NAVIE_VA2PA
     return vaddr % PHYSICAL_MEMORY_SPACE;
     // return vaddr & (0xffffffffffffffff >> (64 - MAX_NUM_PHYSICAL_PAGE));
 
     //等价于 vaddr & 0xfffff  <=> vaddr % 65536
+#endif
+
+    
+    
+    
+    
+    uint64_t paddr = 0;
+
+
+
+
+
+
+#if defined(USE_TLB_HARDWARE) && defined(USE_PAGETABLE_VA2PA)
+    int free_tlb_line_index = -1;
+    int tlb_hit = read_tlb(vaddr, &paddr, &free_tlb_line_index);
+
+    // TODO: add flag to read tlb failed
+    if (tlb_hit){
+        // TLB read hit
+        return paddr;
+    }
+
+    // TLB read miss
+#endif
+
+
+
+
+
+
+
+#ifdef USE_PAGETABLE_VA2PA
+    // assume that page_walk is consuming much time
+    paddr = page_walk(vaddr);
+#endif
+
+
+
+
+
+
+#if defined(USE_TLB_HARDWARE) && defined(USE_PAGETABLE_VA2PA)
+    // refresh TLB
+    // TODO: check if this paddr from page table is a legal address
+    if (paddr != 0){
+        // TLB write
+        if (write_tlb(vaddr, paddr, free_tlb_line_index) == 1){
+            return paddr;
+        }
+    }
+#endif
+
+
+
+    // use page table as va2pa
+    return paddr;
+
 }
+
+
+
+
+
+
 // input - virtual address
 // output - physical address
  static uint64_t page_walk(uint64_t vaddr_value);

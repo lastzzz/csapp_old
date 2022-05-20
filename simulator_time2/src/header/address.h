@@ -5,14 +5,14 @@
 
 #include <stdint.h>
 
-#ifndef CACHE_SIMULATION_VERIFICATION
+// #ifndef CACHE_SIMULATION_VERIFICATION
 /*  for cache simulator verification
     use the marcos passed in
  */
 #define SRAM_CACHE_INDEX_LENGTH (6)
 #define SRAM_CACHE_OFFSET_LENGTH (6)
 #define SRAM_CACHE_TAG_LENGTH (40)
-#endif
+// #endif
 
 #define PHYSICAL_PAGE_OFFSET_LENGTH (12)
 #define PHYSICAL_PAGE_NUMBER_LENGTH (40)
