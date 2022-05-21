@@ -290,8 +290,8 @@ cpu_cr_t cpu_controls;
 // }core_t;
 
 // define CPU core array to support core level parallelism
-#define NUM_CORES 1
-core_t cores[NUM_CORES];
+// #define NUM_CORES 1
+// core_t cores[NUM_CORES];
 
 //active core for current task
 uint64_t ACTIVE_CORE;

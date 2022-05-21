@@ -11,8 +11,8 @@ static void TestAddFunctionCallAndComputation();
 static void TestString2Uint();
 static void TestSumRecursiveCondition();
 
-void print_register(core_t *cr);
-void print_stack(core_t *cr);
+void print_register();
+void print_stack();
 
 void TestParse_operand();
 void TestParse_instruciation();
@@ -27,25 +27,25 @@ int main(){
 
 static void TestSumRecursiveCondition(){
     
-    ACTIVE_CORE = 0X0;
+    // ACTIVE_CORE = 0X0;
 
-    core_t *cr = (core_t *)&cores[ACTIVE_CORE];
+    // core_t *cr = (core_t *)&cores[ACTIVE_CORE];
 
     //init state
-    cr->reg.rax = 0x8000630;
-    cr->reg.rbx = 0x0;
-    cr->reg.rcx = 0x8000650;
-    cr->reg.rdx = 0x7ffffffee328;
-    cr->reg.rsi = 0x7ffffffee318;
-    cr->reg.rdi = 0x1;
-    cr->reg.rbp = 0x7ffffffee230;
-    cr->reg.rsp = 0x7ffffffee220;
+    cpu_reg.rax = 0x8000630;
+    cpu_reg.rbx = 0x0;
+    cpu_reg.rcx = 0x8000650;
+    cpu_reg.rdx = 0x7ffffffee328;
+    cpu_reg.rsi = 0x7ffffffee318;
+    cpu_reg.rdi = 0x1;
+    cpu_reg.rbp = 0x7ffffffee230;
+    cpu_reg.rsp = 0x7ffffffee220;
     
-    cr->flags.__flag_value = 0;
+    cpu_flags.__flag_value = 0;
     
-    cpu_write64bits_dram(va2pa(0x7ffffffee230, cr), 0x0000000008000650, cr);//rbp
-    cpu_write64bits_dram(va2pa(0x7ffffffee228, cr), 0x0000000000000000, cr);
-    cpu_write64bits_dram(va2pa(0x7ffffffee220, cr), 0x00007ffffffee310, cr);//rsp
+    cpu_write64bits_dram(va2pa(0x7ffffffee230), 0x0000000008000650);//rbp
+    cpu_write64bits_dram(va2pa(0x7ffffffee228), 0x0000000000000000);
+    cpu_write64bits_dram(va2pa(0x7ffffffee220), 0x00007ffffffee310);//rsp
 
     char assembly[19][MAX_INSTRUCTION_CHAR] = {
         "push   %rbp",              // 0
@@ -72,33 +72,33 @@ static void TestSumRecursiveCondition(){
 
     for (int i = 0; i < 19; ++ i)
     {
-        cpu_writeinst_dram(va2pa(i * 0x40 + 0x00400000, cr), assembly[i], cr);
+        cpu_writeinst_dram(va2pa(i * 0x40 + 0x00400000), assembly[i]);
         // 每次偏移64个字节的长度
     }
     // MAX_INSTRUCTION_CHAR * sizeof(char) = 64，就是0x40
-    cr->rip = MAX_INSTRUCTION_CHAR * sizeof(char) * 16 + 0x00400000;//main 函数开始的位置
+    cpu_pc.rip = MAX_INSTRUCTION_CHAR * sizeof(char) * 16 + 0x00400000;//main 函数开始的位置
 
     printf("begin\n");
     int time = 0;
-    while ((cr->rip <= 18 * 0x40 + 0x00400000) && time < MAX_NUM_INSTRUCTION_CYCLE){
+    while ((cpu_pc.rip <= 18 * 0x40 + 0x00400000) && time < MAX_NUM_INSTRUCTION_CYCLE){
 
-        instruction_cycle(cr);
-        print_register(cr);
-        print_stack(cr);
+        instruction_cycle();
+        print_register();
+        print_stack();
         time++;
     }
 
     int match = 1;
 
     // gdb state ret from func
-    match = match && (cr->reg.rax == 0x6);
-    match = match && (cr->reg.rbx == 0x0);
-    match = match && (cr->reg.rcx == 0x8000650);
-    match = match && (cr->reg.rdx == 0x3);
-    match = match && (cr->reg.rsi == 0x7ffffffee318);
-    match = match && (cr->reg.rdi == 0x0);
-    match = match && (cr->reg.rbp == 0x7ffffffee230);
-    match = match && (cr->reg.rsp == 0x7ffffffee220);
+    match = match && (cpu_reg.rax == 0x6);
+    match = match && (cpu_reg.rbx == 0x0);
+    match = match && (cpu_reg.rcx == 0x8000650);
+    match = match && (cpu_reg.rdx == 0x3);
+    match = match && (cpu_reg.rsi == 0x7ffffffee318);
+    match = match && (cpu_reg.rdi == 0x0);
+    match = match && (cpu_reg.rbp == 0x7ffffffee230);
+    match = match && (cpu_reg.rsp == 0x7ffffffee220);
 
     if (match == 1){
         printf("register match\n");
@@ -109,9 +109,9 @@ static void TestSumRecursiveCondition(){
 
     match = 1;
 
-    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee230, cr), cr) == 0x0000000008000650);//rbp
-    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee228, cr), cr) == 0x0000000000000006);
-    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee220, cr), cr) == 0x00007ffffffee310);//rsp
+    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee230)) == 0x0000000008000650);//rbp
+    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee228)) == 0x0000000000000006);
+    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee220)) == 0x00007ffffffee310);//rsp
 
     if (match == 1){
         printf("memory match\n");
@@ -147,25 +147,26 @@ static void TestString2Uint(){
 
 static void TestAddFunctionCallAndComputation(){
 
-    ACTIVE_CORE = 0X0;
+    // ACTIVE_CORE = 0X0;
 
-    core_t *ac = (core_t *)&cores[ACTIVE_CORE];
+    // core_t *ac = (core_t *)&cores[ACTIVE_CORE];
 
     //init state
-    ac->reg.rax = 0xabcd;
-    ac->reg.rbx = 0x8000670;
-    ac->reg.rcx = 0x8000670;
-    ac->reg.rdx = 0x12340000;
-    ac->reg.rsi = 0x7ffffffee208;
-    ac->reg.rdi = 0x1;
-    ac->reg.rbp = 0x7ffffffee110;
-    ac->reg.rsp = 0x7ffffffee0f0;
+    
+    cpu_reg.rax = 0xabcd;
+    cpu_reg.rbx = 0x8000670;
+    cpu_reg.rcx = 0x8000670;
+    cpu_reg.rdx = 0x12340000;
+    cpu_reg.rsi = 0x7ffffffee208;
+    cpu_reg.rdi = 0x1;
+    cpu_reg.rbp = 0x7ffffffee110;
+    cpu_reg.rsp = 0x7ffffffee0f0;
 
-    cpu_write64bits_dram(va2pa(0x7ffffffee110, ac), 0x0000000000000000, ac);//rbp
-    cpu_write64bits_dram(va2pa(0x7ffffffee108, ac), 0x0000000000000000, ac);
-    cpu_write64bits_dram(va2pa(0x7ffffffee100, ac), 0x0000000012340000, ac);
-    cpu_write64bits_dram(va2pa(0x7ffffffee0f8, ac), 0x000000000000abcd, ac);
-    cpu_write64bits_dram(va2pa(0x7ffffffee0f0, ac), 0x0000000000000000, ac);//rsp
+    cpu_write64bits_dram(va2pa(0x7ffffffee110), 0x0000000000000000);//rbp
+    cpu_write64bits_dram(va2pa(0x7ffffffee108), 0x0000000000000000);
+    cpu_write64bits_dram(va2pa(0x7ffffffee100), 0x0000000012340000);
+    cpu_write64bits_dram(va2pa(0x7ffffffee0f8), 0x000000000000abcd);
+    cpu_write64bits_dram(va2pa(0x7ffffffee0f0), 0x0000000000000000);//rsp
 
 
     // 2 before call
@@ -195,11 +196,12 @@ static void TestAddFunctionCallAndComputation(){
 
     for (int i = 0; i < 15; ++ i)
     {
-        cpu_writeinst_dram(va2pa(i * 0x40 + 0x00400000, ac), assembly[i], ac);
+        cpu_writeinst_dram(va2pa(i * 0x40 + 0x00400000), assembly[i]);
         // 每次偏移64个字节的长度
     }
     // MAX_INSTRUCTION_CHAR * sizeof(char) = 64，就是0x40
-    ac->rip = MAX_INSTRUCTION_CHAR * sizeof(char) * 11 + 0x00400000;//main 函数开始的位置
+    
+    cpu_pc.rip = MAX_INSTRUCTION_CHAR * sizeof(char) * 11 + 0x00400000;//main 函数开始的位置
 
     
     sprintf(assembly[13], "callq $%p\n", &assembly[0]);
@@ -207,9 +209,9 @@ static void TestAddFunctionCallAndComputation(){
     printf("begin\n");
     int time = 0;
     while (time < 15){
-        instruction_cycle(ac);
-        print_register(ac);
-        print_stack(ac);
+        instruction_cycle();
+        print_register();
+        print_stack();
         time++;
     }
 
@@ -218,14 +220,14 @@ static void TestAddFunctionCallAndComputation(){
     
     int match = 1;
 
-    match = match && (ac->reg.rax == 0x1234abcd);
-    match = match && (ac->reg.rbx == 0x8000670);
-    match = match && (ac->reg.rcx == 0x8000670);
-    match = match && (ac->reg.rdx == 0xabcd);
-    match = match && (ac->reg.rsi == 0x12340000);
-    match = match && (ac->reg.rdi == 0xabcd);
-    match = match && (ac->reg.rbp == 0x7ffffffee110);
-    match = match && (ac->reg.rsp == 0x7ffffffee0f0);
+    match = match && (cpu_reg.rax == 0x1234abcd);
+    match = match && (cpu_reg.rbx == 0x8000670);
+    match = match && (cpu_reg.rcx == 0x8000670);
+    match = match && (cpu_reg.rdx == 0xabcd);
+    match = match && (cpu_reg.rsi == 0x12340000);
+    match = match && (cpu_reg.rdi == 0xabcd);
+    match = match && (cpu_reg.rbp == 0x7ffffffee110);
+    match = match && (cpu_reg.rsp == 0x7ffffffee0f0);
 
     if (match == 1){
         printf("register match\n");
@@ -236,11 +238,11 @@ static void TestAddFunctionCallAndComputation(){
 
     match = 1;
 
-    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee110, ac), ac) == 0x0000000000000000);
-    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee108, ac), ac) == 0x000000001234abcd);
-    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee100, ac), ac) == 0x0000000012340000);
-    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee0f8, ac), ac) == 0x000000000000abcd);
-    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee0f0, ac), ac) == 0x0000000000000000);
+    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee110)) == 0x0000000000000000);
+    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee108)) == 0x000000001234abcd);
+    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee100)) == 0x0000000012340000);
+    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee0f8)) == 0x000000000000abcd);
+    match = match && (cpu_read64bits_dram(va2pa(0x7ffffffee0f0)) == 0x0000000000000000);
 
     if (match == 1){
         printf("memory match\n");
