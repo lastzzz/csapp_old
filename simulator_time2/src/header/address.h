@@ -9,14 +9,15 @@
 /*  for cache simulator verification
     use the marcos passed in
  */
-#define SRAM_CACHE_INDEX_LENGTH (6)
+
+#define SRAM_CACHE_INDEX_LENGTH (6)       // 未改成当前物理内存
 #define SRAM_CACHE_OFFSET_LENGTH (6)
-#define SRAM_CACHE_TAG_LENGTH (40)
+#define SRAM_CACHE_TAG_LENGTH (40)          //(4)
 // #endif
 
-#define PHYSICAL_PAGE_OFFSET_LENGTH (12)
-#define PHYSICAL_PAGE_NUMBER_LENGTH (40)
-#define PHYSICAL_ADDRESS_LENGTH (52)
+#define PHYSICAL_PAGE_OFFSET_LENGTH (12)    // 未改成当前物理内存
+#define PHYSICAL_PAGE_NUMBER_LENGTH (40)    // (4)
+#define PHYSICAL_ADDRESS_LENGTH (52)        // (16)
 
 #define VIRTUAL_PAGE_OFFSET_LENGTH (12)
 #define VIRTUAL_PAGE_NUMBER_LENGTH (9)  // 9 + 9 + 9 + 9 = 36

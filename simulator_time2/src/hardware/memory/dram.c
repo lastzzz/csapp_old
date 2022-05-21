@@ -9,7 +9,7 @@
 uint8_t sram_cache_read(uint64_t paddr);
 void sram_cache_write(uint64_t paddr, uint8_t data);
 
-#define SRAM_CACHE_SETTING 0  //  开关cashe功能，cache功能以后写
+// #define SRAM_CACHE_SETTING 0  //  开关cashe功能，cache功能以后写
 
 
 /*
@@ -19,71 +19,69 @@ void sram_cache_write(uint64_t paddr, uint8_t data);
 */
 
 // memory accessing used in instruction
-uint64_t cpu_read64bits_dram(uint64_t paddr, core_t *cr){
+uint64_t cpu_read64bits_dram(uint64_t paddr){
 
-    if (SRAM_CACHE_SETTING == 1){
-        //try to load uint64_t from SRAM cache
-        // little-endian
-        uint64_t val = 0x0;
-        for (int i = 0; i < 8; ++i){
-            val += sram_cache_read(paddr + i) << (i * 8);
-        }
-        return val;
+    uint64_t val = 0x0;
+#ifdef USE_SRAM_CACHE
+    
+    //try to load uint64_t from SRAM cache
+    // little-endian
+    
+    for (int i = 0; i < 8; ++i){
+        val += (sram_cache_read(paddr + i) << (i * 8));
     }
-    else {
+    
+#else
         
-        // read from DRAM directly
-        // little-endian
-        uint64_t val = 0x0;
+    // read from DRAM directly
+    // little-endian
 
-        val += (((uint64_t)pm[paddr + 0]) << 0);
-        val += (((uint64_t)pm[paddr + 1]) << 8);
-        val += (((uint64_t)pm[paddr + 2]) << 16);
-        val += (((uint64_t)pm[paddr + 3]) << 24);
-        val += (((uint64_t)pm[paddr + 4]) << 32);
-        val += (((uint64_t)pm[paddr + 5]) << 40);
-        val += (((uint64_t)pm[paddr + 6]) << 48);
-        val += (((uint64_t)pm[paddr + 7]) << 56);
-
-        return val;
-    }
+    val += (((uint64_t)pm[paddr + 0]) << 0);
+    val += (((uint64_t)pm[paddr + 1]) << 8);
+    val += (((uint64_t)pm[paddr + 2]) << 16);
+    val += (((uint64_t)pm[paddr + 3]) << 24);
+    val += (((uint64_t)pm[paddr + 4]) << 32);
+    val += (((uint64_t)pm[paddr + 5]) << 40);
+    val += (((uint64_t)pm[paddr + 6]) << 48);
+    val += (((uint64_t)pm[paddr + 7]) << 56);
+#endif
+    
+    return val;
 
 
 }
 
 
 
-void cpu_write64bits_dram(uint64_t paddr, uint64_t data, core_t *cr){
+void cpu_write64bits_dram(uint64_t paddr, uint64_t data){
 
-    if (SRAM_CACHE_SETTING == 1){
+#ifdef USE_SRAM_CACHE
         
-        // try to write uint64_t to SRAM cache
-        // little-endian
-        for (int i = 0; i < 8; ++i){
-            sram_cache_write(paddr + i, (data >> (i * 8)) & 0xff);
-        }
-        return;
-
+    // try to write uint64_t to SRAM cache
+    // little-endian
+    for (int i = 0; i < 8; ++i){
+        sram_cache_write(paddr + i, (data >> (i * 8)) & 0xff);
     }
-    else {
+    return;
 
-        // write to DRAM diretly
-        // little-endian
-        pm[paddr + 0] = (data >> 0) & 0xff;
-        pm[paddr + 1] = (data >> 8) & 0xff;
-        pm[paddr + 2] = (data >> 16) & 0xff;
-        pm[paddr + 3] = (data >> 24) & 0xff;
-        pm[paddr + 4] = (data >> 32) & 0xff;
-        pm[paddr + 5] = (data >> 40) & 0xff;
-        pm[paddr + 6] = (data >> 48) & 0xff;
-        pm[paddr + 7] = (data >> 56) & 0xff;
-    }
     
+#else
+    // write to DRAM diretly
+    // little-endian
+    pm[paddr + 0] = (data >> 0) & 0xff;
+    pm[paddr + 1] = (data >> 8) & 0xff;
+    pm[paddr + 2] = (data >> 16) & 0xff;
+    pm[paddr + 3] = (data >> 24) & 0xff;
+    pm[paddr + 4] = (data >> 32) & 0xff;
+    pm[paddr + 5] = (data >> 40) & 0xff;
+    pm[paddr + 6] = (data >> 48) & 0xff;
+    pm[paddr + 7] = (data >> 56) & 0xff;
+#endif
     
     
 }
 
-void cpu_readinst_dram(uint64_t paddr, char *buf, core_t *core){
+void cpu_readinst_dram(uint64_t paddr, char *buf){
 
     for (int i = 0; i < MAX_INSTRUCTION_CHAR; ++i){
         buf[i] = (char)pm[paddr + i];
@@ -91,7 +89,7 @@ void cpu_readinst_dram(uint64_t paddr, char *buf, core_t *core){
 
 }
 
-void cpu_writeinst_dram(uint64_t paddr, const char *str, core_t *core){
+void cpu_writeinst_dram(uint64_t paddr, const char *str){
 
     int len = strlen(str);
     assert(len < MAX_INSTRUCTION_CHAR);

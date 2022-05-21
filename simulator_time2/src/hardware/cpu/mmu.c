@@ -6,11 +6,41 @@
 #include "../../header/common.h"
 #include "../../header/address.h"
 
+
+// -------------------------------------------- //
+// TLB cache struct
+// -------------------------------------------- //
+#define NUM_TLB_CACHE_LINE_PER_SET (8)
+
+typedef struct {
+    int valid;
+    uint64_t tag;
+    uint64_t ppn;
+} tlb_cacheline_t;
+
+typedef struct{
+    tlb_cacheline_t lines[NUM_TLB_CACHE_LINE_PER_SET];
+} tlb_cacheset_t;
+
+typedef struct{
+    tlb_cacheset_t sets[(1 << TLB_CACHE_INDEX_LENGTH)];
+} tlb_cache_t;
+
+static tlb_cache_t mmu_tlb;
+
+
+
+
+
 static uint64_t page_walk(uint64_t vaddr_value);
 static void page_fault_handler(pte4_t *pte, address_t vaddr);
+
+static int read_tlb(uint64_t vaddr_value, uint64_t *paddr_value_ptr, int *free_tlb_line_index);
+static int write_tlb(uint64_t vaddr_value, uint64_t paddr_value, int free_tlb_line_index);
+
+
 int swap_in(uint64_t daddr, uint64_t ppn);
 int swap_out(uint64_t daddr, uint64_t ppn);
-
 
 
 
@@ -23,16 +53,7 @@ uint64_t va2pa(uint64_t vaddr){
     //等价于 vaddr & 0xfffff  <=> vaddr % 65536
 #endif
 
-    
-    
-    
-    
     uint64_t paddr = 0;
-
-
-
-
-
 
 #if defined(USE_TLB_HARDWARE) && defined(USE_PAGETABLE_VA2PA)
     int free_tlb_line_index = -1;
@@ -48,19 +69,10 @@ uint64_t va2pa(uint64_t vaddr){
 #endif
 
 
-
-
-
-
-
 #ifdef USE_PAGETABLE_VA2PA
     // assume that page_walk is consuming much time
     paddr = page_walk(vaddr);
 #endif
-
-
-
-
 
 
 #if defined(USE_TLB_HARDWARE) && defined(USE_PAGETABLE_VA2PA)
@@ -73,9 +85,6 @@ uint64_t va2pa(uint64_t vaddr){
         }
     }
 #endif
-
-
-
     // use page table as va2pa
     return paddr;
 
@@ -272,11 +281,6 @@ static uint64_t page_walk(uint64_t vaddr_value){
         exit(0);
     }
     
-    
-    
-
-    
-
 
 }
 
@@ -399,6 +403,72 @@ static void page_fault_handler(pte4_t *pte, address_t vaddr){
 
     return;
 
+}
+
+
+static int read_tlb(uint64_t vaddr_value, uint64_t *paddr_value_ptr, int *free_tlb_line_index){
+    address_t vaddr = {
+        .address_value = vaddr_value
+    };
+
+    tlb_cacheset_t *set = &mmu_tlb.sets[vaddr.tlbi];
+    *free_tlb_line_index = -1;
+
+
+    for (int i = 0; i < NUM_TLB_CACHE_LINE_PER_SET; ++ i){
+        
+        tlb_cacheline_t *line = &set->lines[i];
+
+        if (line->valid == 0){
+            *free_tlb_line_index = i;
+        }
+
+        if (line->tag == vaddr.tlbt &&
+            line->valid == 1){
+            // TLB read hit
+            *paddr_value_ptr = line->ppn;
+            return 1;
+        }
+    }
+
+    // TLB read miss
+    *paddr_value_ptr = NULL;
+    return 0;
+}
+
+
+static int write_tlb(uint64_t vaddr_value, uint64_t paddr_value, int free_tlb_line_index){
+    address_t vaddr = {
+        .address_value = vaddr_value
+    };
+
+    address_t paddr = {
+        .address_value = paddr_value
+    };
+
+    tlb_cacheset_t *set = &mmu_tlb.sets[vaddr.tlbi];
+
+    if (0 <= free_tlb_line_index && free_tlb_line_index < NUM_TLB_CACHE_LINE_PER_SET)
+    {
+        tlb_cacheline_t *line = &set->lines[free_tlb_line_index];
+
+        line->valid = 1;
+        line->ppn = paddr.ppn;
+        line->tag = vaddr.tlbt;
+
+        return 1;
+    }
+
+    // no free TLB cache line, select one RANDOM victim
+    int random_victim_index = random() % NUM_TLB_CACHE_LINE_PER_SET;
+
+    tlb_cacheline_t *line = &set->lines[random_victim_index];
+
+    line->valid = 1;
+    line->ppn = paddr.ppn;
+    line->tag = vaddr.tlbt;
+
+    return 1;
 }
 
 
