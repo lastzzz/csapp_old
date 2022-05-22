@@ -27,6 +27,7 @@ uint64_t cpu_read64bits_dram(uint64_t paddr){
     //try to load uint64_t from SRAM cache
     // little-endian
     
+    
     for (int i = 0; i < 8; ++i){
         val += (sram_cache_read(paddr + i) << (i * 8));
     }
@@ -50,7 +51,6 @@ uint64_t cpu_read64bits_dram(uint64_t paddr){
 
 
 }
-
 
 
 void cpu_write64bits_dram(uint64_t paddr, uint64_t data){
@@ -133,3 +133,6 @@ void bus_write_cacheline(uint64_t paddr, uint8_t *block){
     }
 
 }
+
+
+
