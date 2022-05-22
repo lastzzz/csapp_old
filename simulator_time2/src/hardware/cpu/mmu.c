@@ -35,6 +35,7 @@ static tlb_cache_t mmu_tlb;
 static uint64_t page_walk(uint64_t vaddr_value);
 static void page_fault_handler(pte4_t *pte, address_t vaddr);
 
+
 static int read_tlb(uint64_t vaddr_value, uint64_t *paddr_value_ptr, int *free_tlb_line_index);
 static int write_tlb(uint64_t vaddr_value, uint64_t paddr_value, int free_tlb_line_index);
 
