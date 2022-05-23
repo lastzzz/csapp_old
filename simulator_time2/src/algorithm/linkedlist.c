@@ -368,6 +368,7 @@ void linkedlist_add(linkedlist_t *list, uint64_t value)
     );
 }
 
+
 void linkedlist_delete(linkedlist_t *list, linkedlist_node_t *node)
 {
     linkedlist_internal_delete(

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 #include "../../header/cpu.h"
 #include "../../header/memory.h"
 #include "../../header/common.h"
@@ -181,19 +182,19 @@ static uint64_t page_walk(uint64_t vaddr_value){
 
         // starting PHYSICAL PAGE NUMBER of the next level page table
         // aka, high bits starting address of the page table 
-        pte123_t *pud = (pte123_t *)(pgd[vaddr.vpn1].paddr);
+        pte123_t *pud = (pte123_t *)((uint64_t)pgd[vaddr.vpn1].paddr);
 
 
         if (pud[vaddr.vpn2].present == 1){
             
             // find pmd ppn
-            pte123_t *pmd = (pte123_t *)(pud[vaddr.vpn2].paddr);
+            pte123_t *pmd = (pte123_t *)((uint64_t)pud[vaddr.vpn2].paddr);
 
             if (pmd[vaddr.vpn3].present == 1){
 
                 // find pt ppn
                 
-                pte4_t *pt = (pte4_t *)(pmd[vaddr.vpn3].paddr);
+                pte4_t *pt = (pte4_t *)((uint64_t)pmd[vaddr.vpn3].paddr);
 
                 if (pt[vaddr.vpn4].present == 1){
                     
@@ -433,7 +434,7 @@ static int read_tlb(uint64_t vaddr_value, uint64_t *paddr_value_ptr, int *free_t
     }
 
     // TLB read miss
-    *paddr_value_ptr = NULL;
+    paddr_value_ptr = NULL;
     return 0;
 }
 

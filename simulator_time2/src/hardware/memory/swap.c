@@ -13,7 +13,7 @@
 #define SWAP_PAGE_FILE_LINES (512)
 
 // disk address counter
-static uint64_t internal_swap_daddr = 0;
+// static uint64_t internal_swap_daddr = 0;
 
 
 int swap_in(uint64_t daddr, uint64_t ppn){
@@ -47,7 +47,7 @@ int swap_out(uint64_t daddr, uint64_t ppn){
     uint64_t ppn_ppo = ppn << PHYSICAL_PAGE_NUMBER_LENGTH;
     for (int i = 0; i < SWAP_PAGE_FILE_LINES; ++i){
         // 每次写8个字节,也就是说swap文件每一行写64位，就是8个字节
-        fprintf(fw, "0x16lx\n", *((uint64_t *)(&pm[ppn_ppo + i * 8])));
+        fprintf(fw, "0x16%lx\n", *((uint64_t *)(&pm[ppn_ppo + i * 8])));
 
     }
     fclose(fw);

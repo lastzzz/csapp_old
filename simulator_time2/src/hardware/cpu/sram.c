@@ -97,7 +97,7 @@ uint8_t sram_cache_read(uint64_t paddr_value){
     //try to find one free cache line
     if (invalid != NULL){
         // load data from DRAM to this invalid cache line
-        bus_read_cacheline(paddr.paddr_value, &(invalid->block));
+        bus_read_cacheline(paddr.paddr_value, (invalid->block));
 
         //update cache line state
         invalid->state = CACHE_LINE_CLEAN;
@@ -113,7 +113,7 @@ uint8_t sram_cache_read(uint64_t paddr_value){
     // no free cache line, use LRU policy
     if (victim->state == CACHE_LINE_DIRTY){
         // write back the dirty line to dram
-        bus_write_cacheline(paddr.paddr_value, victim);
+        bus_write_cacheline(paddr.paddr_value, victim->block);
 
         // update state
         victim->state = CACHE_LINE_INVALID;
@@ -124,7 +124,7 @@ uint8_t sram_cache_read(uint64_t paddr_value){
 
     // read from dram
     // load data from DRAM to this invalid cache line
-    bus_read_cacheline(paddr.paddr_value, &(victim->block));
+    bus_read_cacheline(paddr.paddr_value, (victim->block));
 
     //update cache line state
     victim->state = CACHE_LINE_CLEAN;
@@ -193,7 +193,7 @@ void sram_cache_write(uint64_t paddr_value, uint8_t data){
     //try to find one free cache line
     if (invalid != NULL){
         // load data from DRAM to this invalid cache line
-        bus_read_cacheline(paddr.paddr_value, &(invalid->block));
+        bus_read_cacheline(paddr.paddr_value, (invalid->block));
 
         //update cache line state
         invalid->state = CACHE_LINE_DIRTY;
@@ -212,7 +212,7 @@ void sram_cache_write(uint64_t paddr_value, uint8_t data){
     // no free cache line, use LRU policy
     if (victim->state == CACHE_LINE_DIRTY){
         // write back the dirty line to dram
-        bus_write_cacheline(paddr.paddr_value, victim);
+        bus_write_cacheline(paddr.paddr_value, victim->block);
 
         // update state
         victim->state = CACHE_LINE_INVALID;
@@ -224,7 +224,7 @@ void sram_cache_write(uint64_t paddr_value, uint8_t data){
     // read from dram
     // write-allocate
     // load data from DRAM to this invalid cache line
-    bus_read_cacheline(paddr.paddr_value, &(victim->block));
+    bus_read_cacheline(paddr.paddr_value, (victim->block));
 
     //update cache line state
     victim->state = CACHE_LINE_DIRTY;
