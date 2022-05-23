@@ -236,6 +236,18 @@ static uint64_t get_prevheader(uint64_t vaddr){
 }
 
 
+/**************************************************/
+/*  Explicit Free List                            */
+/**************************************************/
+
+
+static uint32_t get_nextfree(header_vaddr){
+    
+    return *(uint32_t *)&heap[header_vaddr + 8];
+}
+
+
+
 
 
 int heap_check(){
